@@ -44,28 +44,36 @@ else
     Date = regexp(File, '\d{6}', 'match');
     Date = Date{1};
     try
-        cd(['Z:\People\Nathan\Data\', folder, '\', Date, '\summed'])
-        files = dir(cd);
-        check = 0;
-        for i = 1:length(files)
-            if ~isempty(regexp(files(i).name,'_001_001_summed_50_Analyzed_ByNathan')) || ~isempty(regexp(files(i).name,'_001_001_summed_50Analyzed_ByNathan'))
-                load(files(i).name)
-                check = 1;
-            end
-        end
-        if ~check   %%% If no files were found using the above criteria
+        if strcmpi(experimenter, 'NH')
+            cd(['Z:\People\Nathan\Data\', folder, '\', Date, '\summed']) 
+            files = dir(cd);
+            check = 0;
             for i = 1:length(files)
-                if ~isempty(regexp(files(i).name, '001_001_summed_50_Analyzed'))
+                if ~isempty(regexp(files(i).name,'_001_001_summed_50_Analyzed_ByZhongmin')) % change to ByZhongmin
                     load(files(i).name)
-                else
+                    check = 1;
                 end
             end
-        else
+            if ~check   %%% If no files were found using the above criteria
+                for i = 1:length(files)
+                    if ~isempty(regexp(files(i).name, '001_001_summed_50_Analyzed'))
+                        load(files(i).name)
+                    else
+                    end
+                end
+            else
+            end
+        elseif strcmpi(experimenter, 'ZL')
+            cd(['Z:\People\Zhongmin\Data\', folder, '\', Date, '\summed']) %change to ZL server folder directory
+            load([folder, '_', Date(3:end), '_001_001_summed_50_Analyzed'])
+        elseif strcmpi(experimenter, 'SC')
+            cd(['Z:\People\Simon\Data\Simon\', folder, '\', Date, '\summed'])
+            load([folder, '_', Date, '_001_001_summed_50_Analyzed'])
         end
     catch      %%% File naming gets wonked up sometimes; change whatever you need to make the program read the file
-        if strcmpi(experimenter, 'NH')
+        if strcmpi(experimenter, 'ZL')
             try
-                cd(['Z:\People\Nathan\Data','\', folder, '\', Date, '\summed'])
+                cd(['Z:\People\Zhongmin\Data\','\', folder, '\', Date, '\summed']) %change to ZL server folder directory
                 files = dir(cd);
                 for i = 1:length(files)
                     if ~isempty(regexp(files(i).name, [folder, '_', Date(3:end), '_001_001_summed_50_Analyzed']))
@@ -76,7 +84,7 @@ else
                 end
             catch
                 if ispc
-                    cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+                    cd('C:\spine_imaging analysis\ActivitySummary_UsingRawData') %change to ZL computer directory
                     files = dir(cd);
                     for i = 1:length(files)
                         if ~isempty(regexp(files(i).name, [folder, '_', Date, '_Summary']))
@@ -85,7 +93,7 @@ else
                     end
                 elseif isunix
                     try
-                        cd(['/usr/local/lab/People/Nathan/Data/', folder, '/', Date, '/summed'])
+                        cd(['/usr/local/lab/People/Zhongmin/Data/', folder, '/', Date, '/summed']) %change to ZL server directory
                         files = dir(cd);
                         for i = 1:length(files)
                             if ~isempty(regexp(files(i).name, [folder, '_', Date(3:end), '_001_001_summed_50_Analyzed']))
@@ -99,21 +107,21 @@ else
                     end
                 end
             end
-        elseif strcmpi(experimenter, 'XR')                                              
-            cd(['Z:\People\Nathan\Xiangyu\', folder, '\', Date, '\summed'])
-            load(['XR0002_', Date(3:end), '_001_001_summed_50_Analyzed'])
+        elseif strcmpi(experimenter, 'ZL')                                              
+            cd(['Z:\People\Zhongmin\Data\', folder, '\', Date, '\summed'])
+            load([folder, '_', Date, '_001_001_summed_50_Analyzed'])
         elseif strcmpi(experimenter, 'SC')
             cd(['Z:\People\Simon\Data\Simon\', folder, '\', Date, '\summed'])
             Date = Date(3:end);
             load([folder, '_', Date, '_001_001_summed_50_Analyzed'])
         end
     end
-    try
+     try 
         eval(['File =' folder, '_', Date, '_001_001_summed_50_Analyzed;'])
-    catch
-        temp = who(['*', experimenter, '*']);
+     catch
+         temp = who(['*', experimenter, '*']);
         eval(['File =', temp{1}, ';']);
-    end
+     end
 end
 
 filename = regexp(File.Filename, '.tif', 'split');
@@ -133,7 +141,7 @@ Scrsz = get(0, 'Screensize');
 
 analyzed.UsePreviousPreferences = 0;
 
-foldertouse = 'C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData';
+foldertouse = 'C:\spine_imaging analysis\ActivitySummary_UsingRawData';     %change to ZL computer directory
 
 % if ~a.UsePreviousPreferences
 % 
@@ -172,7 +180,7 @@ if analyzed.UsePreviousPreferences
 %     SpectralLengthConstant = 10;
 else
     spinethreshmultiplier = 2*ones(1,length(File.dF_over_F));       %%% multiplier to binarize events
-    spinevalueslimitforbaseline = 3;                                %%% for capping values to estimate baseline
+    spinevalueslimitforbaseline = 2;                                %%% for capping values to estimate baseline
     spinevalueslimitfornoise = 2;
     driftbaselinesmoothwindow = 450;
     spinebaselinesmoothwindow = 60;
@@ -213,8 +221,8 @@ if File.NumberofSpines ==  0
     File.NumberofSpines = length(File.deltaF);
 end
 % 
-SpineNo = randi(File.NumberofSpines,1);
-% SpineNo = 49;
+% SpineNo = randi(File.NumberofSpines,1);
+ SpineNo = 4;
 
 
 DendNum = File.NumberofDendrites;
@@ -539,7 +547,7 @@ for i = 1:DendNum
         Options.BeingAnalyzed = 'Poly';
 
 
-        [Pthresh(j,1), Pdriftbaseline(i,:), processed_PolyROI{j}] = AnalyzeTrace(rawpoly{j}, Options);
+        [Pthresh(j,1), Pdriftbaseline(i,:), processed_PolyROI{j}] = AnalyzeTrace(rawpoly{j}, Options); % similar treatment for dendrite: use dendritic noise spread
 
         
         %%% Binarization    
@@ -582,7 +590,7 @@ for i = 1:DendNum
     Options.BeingAnalyzed = 'Dendrite';
 
 
-    [Dthresh(i,1), Ddriftbaseline(i,:), processed_Dendrite(i,:)] = AnalyzeTrace(dendritedatatouse(i,:), Options);
+    [Dthresh(i,1), Ddriftbaseline(i,:), processed_Dendrite(i,:)] = AnalyzeTrace(dendritedatatouse(i,:), Options); % ZL comment, Dthresh is determined by AnalyzeTrace function
 
     floored_Dend = zeros(DendNum,length(processed_Dendrite(1,:)));
     Driders = zeros(DendNum,length(processed_Dendrite(1,:)));
@@ -604,7 +612,8 @@ for i = 1:File.NumberofDendrites
     d2tamp = diff(dtamp);
     d2tamp(d2tamp>0) = 1; d2tamp(d2tamp<0) = -1;
     temp(d2tamp>0) = nan;   %%% For plateau spikes, when the 1st derivative is negative (val. decreasing) and 2nd derivative is positive (concave up, corresponding to dips), punch a 'hole' in the data, so that multiple peaks will be counted
-    Driders(i,:) = temp;    %%% Used to determine when events start, NOT to indicate when the dendrite is active (i.e. represents event onsets, not active periods)
+    Driders(i,:) = temp;%%% Used to determine when events start, NOT to indicate when the dendrite is active (i.e. represents event onsets, not active periods)ZL comment: need to determine when events end if need to average s
+    SpikeStartFrame = Driders (i,:); % ZL comment, mark the start frame of a dendritic spike event
 end
 
 square_Dend = zeros(DendNum,length(processed_Dendrite(1,:)));
@@ -628,7 +637,7 @@ for i = 1:File.NumberofDendrites
     epochs = mat2cell(square_Dend(i,:)', diff(bound));
     polyepoch = mat2cell(square_Poly{i}', diff(bound));
     
-    Dglobal(i,:) = cell2mat(cellfun(@(x,y) x*y, cellfun(@(x) sum(x)>0.1*length(x), cellfun(@round, cellfun(@mean, polyepoch, 'UniformOutput', false), 'UniformOutput', false), 'UniformOutput', false), epochs, 'Uni', false));
+    Dglobal(i,:) = cell2mat(cellfun(@(x,y) x*y, cellfun(@(x) sum(x)>0.75*length(x), cellfun(@round, cellfun(@mean, polyepoch, 'UniformOutput', false), 'UniformOutput', false), 'UniformOutput', false), epochs, 'Uni', false));
         
 %     Dglobal(i,:) = square_Dend(i,:).*globaldendriteevents{i};
     
@@ -647,8 +656,8 @@ for i = 1:File.NumberofDendrites
     
         dendtimebuffer = 0;
     
-        rises = find(diff(Dglobal(i,:))>0);
-        falls = find(diff(Dglobal(i,:))<0);
+        rises = find(diff(Dglobal(i,:))>0); % ZL comment: can be used to determine the start frame of dendritic spike?
+        falls = find(diff(Dglobal(i,:))<0); % ZL comment: can be used to determine the end frame of dendritic spike?
 
         earlier_rises = rises-dendtimebuffer;
             earlier_rises(earlier_rises<1) = 1;
@@ -755,33 +764,32 @@ for i = 1:DendNum
 %     dendDataforfit = floored_Dend(i,:).*globaldendriteevents{i};
 %     dendDataforfit(dendDataforfit<=0) = nan;
     dendDataforfit = processed_Dendrite(i,:);
-    dendDataforfit(dendDataforfit<=Dthresh(i)) = nan;
 %     dendDataforfit = compiledDendData(i,:);
 
+            %%% Downsample Dendrite baseline;
+            dwnsmpfact = 100;
+            D_baseline = dendDataforfit(floored_Dend(i,:)==0);
+            D_signal = dendDataforfit(floored_Dend(i,:)~=0);
+            D_baseline = D_baseline(1:dwnsmpfact:end);
+            dendDataforfit = [D_baseline, D_signal];
     
     for j = File.SpineDendriteGrouping{i}(1):File.SpineDendriteGrouping{i}(end)
 %         spineDataforfit = floored(j,:);
 %         spineDataforfit(spineDataforfit<=0)=nan;
         spineDataforfit = processed_dFoF(j,:);
-        spineDataforfit(spineDataforfit<=0) = nan;   %%%%%%%%%%%%%%%%%%%%%%%%% Changed 12/9 !!!!!!!!!!!!!!!!!!!!!!!!!!!
 %         spineDataforfit = File.Fluorescence_Measurement{j};
 
             %%% Downsample spine baseline (based on matching downsampled
             %%% dend data)
-%             S_baseline = spineDataforfit(floored(i,:)==0);
-%             S_signal = spineDataforfit(floored(i,:)~=0);
-%             S_baseline = S_baseline(1:dwnsmpfact:end);
-%             spineDataforfit = [S_baseline, S_signal];
-              spineDataforfit(spineDataforfit<=thresh(i)) = nan;
+            S_baseline = spineDataforfit(floored_Dend(i,:)==0);
+            S_signal = spineDataforfit(floored_Dend(i,:)~=0);
+            S_baseline = S_baseline(1:dwnsmpfact:end);
+            spineDataforfit = [S_baseline, S_signal];
             
         try
             alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
         catch
-            dendDataforfit = processed_Dendrite(i,:);
-            dendDataforfit(dendDataforfit<=0) = nan;
-            spineDataforfit = processed_dFoF(j,:);
-            spineDataforfit(spineDataforfit<=0) = nan;
-            alpha{i}(1:2,counter) = robustfit(dendDataforfit,spineDataforfit);
+            alpha{i}(1:2,counter) = [1;1];      %%% if robust fitting doesn't work, make the alpha values 1 to subtract the full signal of the dendrite
         end
         counter = counter + 1;
     end
@@ -797,15 +805,13 @@ for i = 1:DendNum
         if alpha{i}(2,counter) == 0
             disp(['Spine ', num2str(j), ' was not fit properly'])
         end
-        if alpha{i}(2,counter)>0.01  %%%%%%%%%%%%%%%%%%%%%%%%% Changed 12/9 !!!!!!!!!!!!!!!!!!!!!!!!!!!
+        if alpha{i}(2,counter)>0.1
 %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*processed_Dendrite(i,:));   %%% Subtracted all individual points   
-            processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*(floored_Dend(i,:)));%.*Dglobal(i,:);           %%% Use Dglobal to only subtract times when the dendrite is active
+            processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(alpha{i}(2,counter)*(floored_Dend(i,:)));%.*Dglobal(i,:);           %%% Only subtract times when the dendrite is active
             processed_dFoF_Dendsubtracted(j,processed_dFoF_Dendsubtracted(j,:)<0) = 0;
         else
 %             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-processed_Dendrite(i,:);
-%             alpha{i}(2,counter) = 1;
-%             processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(floored_Dend(i,:));%.*Dglobal(i,:));
-            processed_dFoF_Dendsubtracted(j,:) = zeros(1,length(processed_dFoF(j,:)));
+            processed_dFoF_Dendsubtracted(j,:) = processed_dFoF(j,:)-(floored_Dend(i,:));%.*Dglobal(i,:));
             processed_dFoF_Dendsubtracted(j,processed_dFoF_Dendsubtracted(j,:)<0) = 0;
         end
         counter = counter + 1;
@@ -848,7 +854,7 @@ for i = 1:numberofSpines
     both_Dsubtracted(i,:) = temp;
     temp2 = (diff(temp)>0.1)>0;
     temp3 = [0, temp2];          %%% Any use of 'diff' shortens the vector by 1
-    smeared = smooth(temp3, 5);  %%% Smoothing factor is taken from the reported decay constant of GCaMP6f (~150ms), converted to frames 
+    smeared = smooth(temp3, 5);  %%% Smoothing factor is taken from the reported decay constant of GCaMP6f (~150ms), converted to frames %ZL comment, 150ms is the time window to determine cofiring of two spines 
     smeared(smeared>0) = 1;
     trueeventcount_Dsubtracted(i,:) = smeared;
     frequency_Dsubtracted(i,1) = (nnz(diff(trueeventcount_Dsubtracted(i,:)>0.5)>0)/((length(File.Time)/30.49)/60))';
@@ -1407,15 +1413,6 @@ analyzed.WeightedClustering = weightedCluster;
 %%
 
 %%% Correlate distant spines on separate dendrites
-
-if length(File.SpineDendriteGrouping) > 1
-    FarSpineDist = nan(File.SpineDendriteGrouping{end-1}(end), File.SpineDendriteGrouping{end}(end)); %%% Pre-allocate NaNs so that unused indices are NaN and not zero (to disambiguate data from place holders)
-    FarSpineCorrelation = nan(File.SpineDendriteGrouping{end-1}(end), File.SpineDendriteGrouping{end}(end));
-else
-    FarSpineDist = [];
-    FarSpineCorrelation = [];
-end
-    
 if File.NumberofDendrites > 1 
     nofSp = File.NumberofSpines;
     nofD = File.NumberofDendrites;
@@ -1446,7 +1443,7 @@ else
     FarSpineCorrelation = 0;
 end
 
-nonzero = find(~isnan(FarSpineDist));
+nonzero = find(FarSpineCorrelation);
 FarCorrelations = FarSpineCorrelation(nonzero);
 FarDistances = FarSpineDist(nonzero);
 
@@ -1460,12 +1457,12 @@ analyzed.OverallSpineActivity = square;
 analyzed.Session = currentsession;
 if ispc
     if spinetraceoption == 1
-        cd('C:\Users\Komiyama\Desktop\ActivitySummary_UsingRawData')
+        cd('C:\spine_imaging analysis\ActivitySummary_UsingRawData') %change to ZL computer directory
     else
-        cd('C:\Users\Komiyama\Desktop\ActivitySummary')
+        cd('C:\spine_imaging analysis\ActivitySummary') %change to ZL computer directory
     end
 elseif isunix
-    cd('/usr/local/lab/People/Nathan/Data/ActivitySummaryFromSuperComputer')
+    cd('/usr/local/lab/People/Zhongmin/Data/ActivitySummaryFromSuperComputer') %change to ZL server directory
 end
 %%%%
 
